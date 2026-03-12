@@ -26,7 +26,7 @@ Single-tile proxy with local disk cache.
 - Transparent proxy: returns raw `.gml` content
 - CLI: `serve --port 8080 --cache-dir ./cache`
 
-## Phase 2 — Bounding Box Endpoint
+## Phase 2 — Bounding Box Endpoint ✅
 
 Fetch multiple tiles covering a geographic bounding box.
 

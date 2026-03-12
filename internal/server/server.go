@@ -82,6 +82,13 @@ func handleBBox(fetcher *proxy.Fetcher) http.HandlerFunc {
 		}
 
 		coords := bb.TileCoords()
+
+		const maxTiles = 100
+		if len(coords) > maxTiles {
+			http.Error(w, fmt.Sprintf("bbox too large: %d tiles (max %d)", len(coords), maxTiles), http.StatusBadRequest)
+			return
+		}
+
 		results := fetcher.GetMulti(coords, 4)
 
 		type entry struct {
