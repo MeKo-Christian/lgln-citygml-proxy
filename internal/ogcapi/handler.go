@@ -57,18 +57,22 @@ type FeatureCollection struct {
 	Links          []Link `json:"links"`
 }
 
+type handler struct {
+	fetcher *proxy.Fetcher
+}
+
 // New returns an http.Handler with all OGC API routes registered.
 func New(fetcher *proxy.Fetcher) http.Handler {
-	_ = fetcher // reserved for future handlers
+	h := &handler{fetcher: fetcher}
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /conformance", handleConformance)
-	mux.HandleFunc("GET /collections", handleCollections)
-	mux.HandleFunc("GET /collections/buildings", handleCollection)
-	mux.HandleFunc("GET /collections/buildings/items", handleItems)
+	mux.HandleFunc("GET /conformance", h.handleConformance)
+	mux.HandleFunc("GET /collections", h.handleCollections)
+	mux.HandleFunc("GET /collections/buildings", h.handleCollection)
+	mux.HandleFunc("GET /collections/buildings/items", h.handleItems)
 	return mux
 }
 
-func handleConformance(w http.ResponseWriter, _ *http.Request) {
+func (h *handler) handleConformance(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, Conformance{
 		ConformsTo: []string{
 			"http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
@@ -77,15 +81,15 @@ func handleConformance(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-func handleCollections(w http.ResponseWriter, _ *http.Request) {
+func (h *handler) handleCollections(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
 
-func handleCollection(w http.ResponseWriter, _ *http.Request) {
+func (h *handler) handleCollection(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
 
-func handleItems(w http.ResponseWriter, _ *http.Request) {
+func (h *handler) handleItems(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
 
