@@ -193,6 +193,19 @@ func TestHandleBBox_MultipleTiles(t *testing.T) {
 	}
 }
 
+func TestHandleBBox_TooManyTiles(t *testing.T) {
+	h := New(proxy.New(t.TempDir()))
+
+	// 101x101 km = 10201 tiles — exceeds maxTiles=100
+	req := httptest.NewRequest(http.MethodGet, "/lod2?bbox=400000,5700000,500000,5800000", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want 400", rec.Code)
+	}
+}
+
 func TestHandleBBox_AllNotFound(t *testing.T) {
 	upstream := upstreamServer(t, http.StatusNotFound, "")
 	defer upstream.Close()
