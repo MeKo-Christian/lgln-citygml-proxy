@@ -21,6 +21,7 @@ const (
 
 // ToWGS84 converts UTM Zone 32N (EPSG:25832) easting/northing in metres to
 // WGS84 longitude and latitude in decimal degrees.
+// Valid for the northern hemisphere only (falseN = 0).
 // Uses Snyder's Transverse Mercator inverse formulas (Snyder p.60-61).
 func ToWGS84(easting, northing float64) (lon, lat float64) {
 	x := easting - falseE
