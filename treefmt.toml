@@ -1,0 +1,44 @@
+# treefmt configuration for lgln-citygml-proxy
+
+[global]
+excludes = [
+    "**/.gitignore",
+    "**/.git/**",
+    "go.sum",
+    "go.mod",
+    "**/*.txt",
+    "CHANGELOG.md",
+    "LICENSE",
+    "**/*.pdf",
+    "**/*.png",
+    "**/*.jpg",
+    "**/*.jpeg",
+    "bin/**",
+    "cache/**",
+]
+
+[formatter.gofumpt]
+command = "gofumpt"
+options = ["-w"]
+includes = ["*.go"]
+
+[formatter.gci]
+command = "gci"
+options = ["write"]
+includes = ["*.go"]
+priority = 1
+
+[formatter.shfmt]
+command = "shfmt"
+options = ["-s", "-w"]
+includes = ["*.sh"]
+
+[formatter.prettier]
+command = "prettier"
+options = ["-w"]
+includes = [
+    "*.md",
+    "*.yaml",
+    "*.yml",
+    "*.json",
+]

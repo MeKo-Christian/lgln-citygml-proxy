@@ -1,0 +1,67 @@
+# golangci-lint configuration for lgln-citygml-proxy
+
+version = "2"
+
+[run]
+timeout = "5m"
+
+[linters]
+default = "none"
+
+enable = [
+    "errcheck",      # Check for unchecked errors
+    "govet",         # Go vet
+    "ineffassign",   # Detect ineffectual assignments
+    "staticcheck",   # Staticcheck
+    "unused",        # Detect unused code
+    "gosec",         # Security checker
+    "misspell",      # Spell checker
+    "revive",        # Replacement for golint
+    "unconvert",     # Unnecessary conversions
+    "unparam",       # Unused function parameters
+    "gocyclo",       # Cyclomatic complexity
+    "goconst",       # Detect repeated strings
+    "gocritic",      # Opinionated linter
+]
+
+[linters.settings.varnamelen]
+ignore-names = [
+    "ok",
+    "id",
+    "i",
+    "j",
+    "n",
+    "r",
+    "w",
+    "b",
+]
+
+[linters.exclusions]
+presets = [
+    "comments",
+    "common-false-positives",
+    "legacy",
+    "std-error-handling",
+]
+
+[[linters.exclusions.rules]]
+linters = ["gosec"]
+text = "G601"
+
+[[linters.exclusions.rules]]
+linters = ["revive"]
+path = "cmd/"
+
+[[linters.exclusions.rules]]
+linters = ["errcheck"]
+path = "_test\\.go"
+
+[formatters]
+enable = [
+    "gofmt",
+    "goimports",
+]
+
+[issues]
+max-issues-per-linter = 0
+max-same-issues = 0
