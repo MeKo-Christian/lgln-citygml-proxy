@@ -14,6 +14,7 @@ const baseURL = "https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud"
 // Fetcher retrieves CityGML tiles, caching them on disk.
 type Fetcher struct {
 	cacheDir string
+	base     string
 	client   *http.Client
 }
 
@@ -21,8 +22,14 @@ type Fetcher struct {
 func New(cacheDir string) *Fetcher {
 	return &Fetcher{
 		cacheDir: cacheDir,
+		base:     baseURL,
 		client:   &http.Client{},
 	}
+}
+
+// NewWithBaseURL creates a Fetcher with an overridden base URL (for testing).
+func NewWithBaseURL(cacheDir, base string) *Fetcher {
+	return &Fetcher{cacheDir: cacheDir, base: base, client: &http.Client{}}
 }
 
 // TileURL returns the upstream URL for the given tile coordinates.
@@ -47,7 +54,7 @@ func (f *Fetcher) Get(eastingKM, northingKM int) ([]byte, error) {
 	}
 
 	// Fetch from upstream.
-	url := TileURL(eastingKM, northingKM)
+	url := fmt.Sprintf("%s/LoD2_32_%d_%d_1_ni.gml", f.base, eastingKM, northingKM)
 
 	resp, err := f.client.Get(url)
 	if err != nil {

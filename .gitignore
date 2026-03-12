@@ -1,2 +1,5 @@
 bin/
 cache/
+web/citygml.wasm
+web/wasm_exec.js
+web/tiles/

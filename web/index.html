@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LGLN CityGML – Hannover LoD2</title>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="LGLN CityGML – Hannover LoD2" />
+    <meta
+      property="og:description"
+      content="3D building data for Hannover from LGLN Niedersachsen, visualized in the browser via WebAssembly."
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Loading / splash view -->
+      <div id="loading-view" class="view active">
+        <header>
+          <button id="theme-toggle-loading" class="theme-toggle" aria-label="Toggle theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
+            <span class="theme-toggle-label">Auto</span>
+          </button>
+          <h1>LGLN CityGML</h1>
+          <p class="subtitle">Hannover LoD2 — open 3D building data</p>
+        </header>
+
+        <div id="splash-loading" class="splash-status">
+          <div class="spinner"></div>
+          <p id="splash-message">Initialising…</p>
+        </div>
+
+        <div id="splash-error" class="error hidden">
+          <p id="splash-error-message"></p>
+        </div>
+
+        <footer>
+          <p>
+            Data: <a href="https://opengeodata.lgln.niedersachsen.de/" target="_blank">LGLN Niedersachsen</a>
+            (CC BY 4.0) &mdash;
+            Powered by <a href="https://github.com/cwbudde/go-citygml" target="_blank">go-citygml</a>
+          </p>
+        </footer>
+      </div>
+
+      <!-- Visualization view -->
+      <div id="viz-view" class="view">
+        <div class="viz-header">
+          <div class="viz-header-left">
+            <h2>Hannover LoD2</h2>
+            <span id="file-meta" class="file-meta"></span>
+          </div>
+          <button id="theme-toggle-viz" class="theme-toggle" aria-label="Toggle theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
+            <span class="theme-toggle-label">Auto</span>
+          </button>
+        </div>
+
+        <div class="viz-layout">
+          <div class="viz-main">
+            <div class="viz-toggle">
+              <button class="viz-toggle-btn active" data-view="map">2D Map</button>
+              <button class="viz-toggle-btn" data-view="scene">3D Scene</button>
+            </div>
+            <div id="map-container" class="viz-canvas active">
+              <div id="map"></div>
+            </div>
+            <div id="scene-container" class="viz-canvas">
+              <canvas id="scene-canvas"></canvas>
+              <div class="scene-controls">
+                <label>
+                  <input type="checkbox" id="wireframe-toggle" />
+                  Wireframe
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="viz-sidebar">
+            <div class="sidebar-tabs">
+              <button class="sidebar-tab active" data-tab="summary">Summary</button>
+              <button class="sidebar-tab" data-tab="objects">Objects</button>
+              <button class="sidebar-tab" data-tab="validation">Validation</button>
+            </div>
+
+            <div id="tab-summary" class="sidebar-content active">
+              <table class="info-table" id="summary-table"></table>
+            </div>
+
+            <div id="tab-objects" class="sidebar-content">
+              <div id="objects-list" class="objects-list"></div>
+            </div>
+
+            <div id="tab-validation" class="sidebar-content">
+              <div id="validation-list" class="validation-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="wasm_exec.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
