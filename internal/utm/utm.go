@@ -1,7 +1,11 @@
 // Package utm converts UTM Zone 32N (EPSG:25832) coordinates to WGS84 lon/lat.
 package utm
 
-import "math"
+import (
+	"math"
+
+	"github.com/cwbudde/go-citygml/types"
+)
 
 // WGS84 ellipsoid constants.
 const (
@@ -69,4 +73,90 @@ func ToWGS84(easting, northing float64) (lon, lat float64) {
 	lon = lonRad * 180.0 / math.Pi
 	lat = latRad * 180.0 / math.Pi
 	return
+}
+
+// transformPoint applies ToWGS84 to p.X (easting) and p.Y (northing).
+// p.Z (elevation) is preserved unchanged.
+func transformPoint(p types.Point) types.Point {
+	lon, lat := ToWGS84(p.X, p.Y)
+	return types.Point{X: lon, Y: lat, Z: p.Z}
+}
+
+// transformRing returns a new Ring with every point transformed.
+func transformRing(r types.Ring) types.Ring {
+	out := types.Ring{Points: make([]types.Point, len(r.Points))}
+	for i, p := range r.Points {
+		out.Points[i] = transformPoint(p)
+	}
+	return out
+}
+
+// transformPolygon returns a new Polygon with exterior and interior rings transformed.
+func transformPolygon(poly types.Polygon) types.Polygon {
+	out := types.Polygon{
+		Exterior: transformRing(poly.Exterior),
+	}
+	if len(poly.Interior) > 0 {
+		out.Interior = make([]types.Ring, len(poly.Interior))
+		for i, r := range poly.Interior {
+			out.Interior[i] = transformRing(r)
+		}
+	}
+	return out
+}
+
+// transformMultiSurface returns a new MultiSurface with every polygon transformed.
+func transformMultiSurface(ms types.MultiSurface) types.MultiSurface {
+	out := types.MultiSurface{Polygons: make([]types.Polygon, len(ms.Polygons))}
+	for i, poly := range ms.Polygons {
+		out.Polygons[i] = transformPolygon(poly)
+	}
+	return out
+}
+
+// TransformBuilding returns a copy of b with all geometry fields converted from
+// UTM Zone 32N (EPSG:25832) to WGS84 lon/lat. Z (elevation) is preserved.
+// Nil geometry fields are left nil in the returned copy.
+func TransformBuilding(b types.Building) types.Building {
+	out := b // copy all scalar/non-geometry fields
+
+	// Footprint
+	if b.Footprint != nil {
+		fp := transformPolygon(*b.Footprint)
+		out.Footprint = &fp
+	} else {
+		out.Footprint = nil
+	}
+
+	// MultiSurface
+	if b.MultiSurface != nil {
+		ms := transformMultiSurface(*b.MultiSurface)
+		out.MultiSurface = &ms
+	} else {
+		out.MultiSurface = nil
+	}
+
+	// Solid
+	if b.Solid != nil {
+		s := types.Solid{Exterior: transformMultiSurface(b.Solid.Exterior)}
+		out.Solid = &s
+	} else {
+		out.Solid = nil
+	}
+
+	// BoundedBy
+	if len(b.BoundedBy) > 0 {
+		out.BoundedBy = make([]types.Surface, len(b.BoundedBy))
+		for i, surf := range b.BoundedBy {
+			out.BoundedBy[i] = types.Surface{
+				ID:       surf.ID,
+				Type:     surf.Type,
+				Geometry: transformMultiSurface(surf.Geometry),
+			}
+		}
+	} else {
+		out.BoundedBy = nil
+	}
+
+	return out
 }
