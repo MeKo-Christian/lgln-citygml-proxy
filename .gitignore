@@ -1,5 +1,39 @@
+# Binaries and build artifacts
 bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Testing
+coverage.out
+debug
+*.test
+
+# Dependency directories
+vendor/
+
+# Go cache
 cache/
+
+# WASM build artifacts
 web/citygml.wasm
 web/wasm_exec.js
+
+# Data
 web/tiles/
+
+# Common IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
