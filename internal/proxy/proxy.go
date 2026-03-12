@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 const baseURL = "https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud"
@@ -85,3 +86,32 @@ func (f *Fetcher) Get(eastingKM, northingKM int) ([]byte, error) {
 
 // ErrNotFound indicates the requested tile does not exist upstream.
 var ErrNotFound = fmt.Errorf("tile not found")
+
+// TileResult holds the result of fetching a single tile.
+type TileResult struct {
+	Coord [2]int
+	Data  []byte
+	Err   error
+}
+
+// GetMulti fetches multiple tiles concurrently with the given concurrency limit.
+func (f *Fetcher) GetMulti(coords [][2]int, concurrency int) []TileResult {
+	results := make([]TileResult, len(coords))
+	sem := make(chan struct{}, concurrency)
+	var wg sync.WaitGroup
+
+	for i, c := range coords {
+		wg.Add(1)
+		go func(i int, c [2]int) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			data, err := f.Get(c[0], c[1])
+			results[i] = TileResult{Coord: c, Data: data, Err: err}
+		}(i, c)
+	}
+
+	wg.Wait()
+	return results
+}

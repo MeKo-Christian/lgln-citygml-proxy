@@ -1,10 +1,13 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 )
 
@@ -91,5 +94,64 @@ func TestFetcher_GetUpstreamError(t *testing.T) {
 	_, err := f.Get(550, 5800)
 	if err == nil {
 		t.Error("expected error for 500 response")
+	}
+}
+
+func TestFetcher_GetMulti(t *testing.T) {
+	var mu sync.Mutex
+	requested := make(map[string]bool)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		requested[r.URL.Path] = true
+		mu.Unlock()
+		fmt.Fprintf(w, "<CityModel>%s</CityModel>", r.URL.Path)
+	}))
+	defer srv.Close()
+
+	f := NewWithBaseURL(t.TempDir(), srv.URL)
+	coords := [][2]int{{550, 5800}, {551, 5801}}
+
+	results := f.GetMulti(coords, 2)
+
+	if len(results) != 2 {
+		t.Fatalf("got %d results, want 2", len(results))
+	}
+
+	for _, r := range results {
+		if r.Err != nil {
+			t.Errorf("tile %v: unexpected error: %v", r.Coord, r.Err)
+		}
+		if len(r.Data) == 0 {
+			t.Errorf("tile %v: empty data", r.Coord)
+		}
+	}
+}
+
+func TestFetcher_GetMulti_SkipsNotFound(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "999_999") {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		fmt.Fprintf(w, "<CityModel/>")
+	}))
+	defer srv.Close()
+
+	f := NewWithBaseURL(t.TempDir(), srv.URL)
+	coords := [][2]int{{550, 5800}, {999, 999}}
+
+	results := f.GetMulti(coords, 2)
+
+	found := 0
+	notFound := 0
+	for _, r := range results {
+		if r.Err == nil {
+			found++
+		} else if r.Err == ErrNotFound {
+			notFound++
+		}
+	}
+	if found != 1 || notFound != 1 {
+		t.Errorf("got found=%d notFound=%d, want found=1 notFound=1", found, notFound)
 	}
 }
