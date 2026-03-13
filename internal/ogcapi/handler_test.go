@@ -201,3 +201,25 @@ func TestItems_OffsetBeyondTotal(t *testing.T) {
 		t.Errorf("numberReturned = %d, want 0", fc.NumberReturned)
 	}
 }
+
+func TestItems_LimitZeroDefaultsTo100(t *testing.T) {
+	upstream := upstreamCityGML(t, minimalCityGML)
+	defer upstream.Close()
+
+	h := newHandlerWithUpstream(t, upstream.URL)
+	// limit=0 should default to 100, returning the 1 available feature
+	req := httptest.NewRequest(http.MethodGet, "/collections/buildings/items?bbox=550000,5800000,550999,5800999&limit=0", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	var fc ogcapi.FeatureCollection
+	if err := json.NewDecoder(rec.Body).Decode(&fc); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if fc.NumberReturned != fc.NumberMatched {
+		t.Errorf("limit=0 should default to 100: numberReturned=%d, numberMatched=%d", fc.NumberReturned, fc.NumberMatched)
+	}
+}

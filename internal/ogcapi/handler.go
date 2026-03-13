@@ -57,6 +57,9 @@ type Conformance struct {
 	ConformsTo []string `json:"conformsTo"`
 }
 
+// maxTilesItems is the upper bound on tiles a single /items bbox request may cover.
+const maxTilesItems = 100
+
 // FeatureCollection is the response type for GET /collections/{id}/items.
 type FeatureCollection struct {
 	Type           string `json:"type"`
@@ -133,8 +136,8 @@ func (h *handler) handleItems(w http.ResponseWriter, r *http.Request) {
 	}
 
 	coords := bb.TileCoords()
-	if len(coords) > 100 {
-		http.Error(w, fmt.Sprintf("bbox too large: %d tiles (max 100)", len(coords)), http.StatusBadRequest)
+	if len(coords) > maxTilesItems {
+		http.Error(w, fmt.Sprintf("bbox too large: %d tiles (max %d)", len(coords), maxTilesItems), http.StatusBadRequest)
 		return
 	}
 
