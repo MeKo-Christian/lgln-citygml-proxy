@@ -2,12 +2,18 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
+
+	"github.com/meko-tech/lgln-citygml-proxy/internal/bbox"
+	"github.com/meko-tech/lgln-citygml-proxy/internal/stac"
+	"github.com/meko-tech/lgln-citygml-proxy/internal/utm"
 )
 
 const baseURL = "https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud"
@@ -17,6 +23,7 @@ type Fetcher struct {
 	cacheDir string
 	base     string
 	client   *http.Client
+	stac     *stac.Client // nil = no STAC integration
 }
 
 // New creates a Fetcher with the given cache directory.
@@ -31,6 +38,17 @@ func New(cacheDir string) *Fetcher {
 // NewWithBaseURL creates a Fetcher with an overridden base URL (for testing).
 func NewWithBaseURL(cacheDir, base string) *Fetcher {
 	return &Fetcher{cacheDir: cacheDir, base: base, client: &http.Client{}}
+}
+
+// NewWithSTAC creates a Fetcher with the default upstream URL and a STAC client
+// pointing at stacBaseURL for cache freshness checks.
+func NewWithSTAC(cacheDir, stacBaseURL string) *Fetcher {
+	return &Fetcher{
+		cacheDir: cacheDir,
+		base:     baseURL,
+		client:   &http.Client{},
+		stac:     stac.New(stacBaseURL),
+	}
 }
 
 // TileURL returns the upstream URL for the given tile coordinates.
@@ -86,6 +104,55 @@ func (f *Fetcher) Get(eastingKM, northingKM int) ([]byte, error) {
 
 // ErrNotFound indicates the requested tile does not exist upstream.
 var ErrNotFound = fmt.Errorf("tile not found")
+
+// Invalidate removes the cached file for the given tile, if it exists.
+// Returns nil if the file does not exist.
+func (f *Fetcher) Invalidate(eastingKM, northingKM int) error {
+	err := os.Remove(f.tilePath(eastingKM, northingKM))
+	if err != nil && os.IsNotExist(err) {
+		return nil
+	}
+	return err
+}
+
+// invalidateIfStale removes the cached file for the given tile if it is older
+// than updatedAt. Errors are silently ignored (best-effort).
+func (f *Fetcher) invalidateIfStale(eastingKM, northingKM int, updatedAt time.Time) {
+	info, err := os.Stat(f.tilePath(eastingKM, northingKM))
+	if err != nil {
+		return
+	}
+	if info.ModTime().Before(updatedAt) {
+		_ = os.Remove(f.tilePath(eastingKM, northingKM))
+	}
+}
+
+// BBoxTileCoords returns all 1 km tile coordinates that intersect the given
+// EPSG:25832 bounding box. When a STAC client is configured, it also
+// invalidates cached tiles that are older than the STAC-reported update time.
+func (f *Fetcher) BBoxTileCoords(ctx context.Context, bb bbox.BBox) ([][2]int, error) {
+	if f.stac == nil {
+		return bb.TileCoords(), nil
+	}
+
+	// Convert EPSG:25832 corners to WGS84 for the STAC query.
+	westLon, southLat := utm.ToWGS84(bb.West, bb.South)
+	eastLon, northLat := utm.ToWGS84(bb.East, bb.North)
+
+	items, err := f.stac.ItemsByBBox(ctx, westLon, southLat, eastLon, northLat)
+	if err != nil {
+		return nil, fmt.Errorf("stac items: %w", err)
+	}
+
+	coords := make([][2]int, 0, len(items))
+	for _, item := range items {
+		if !item.UpdatedAt.IsZero() {
+			f.invalidateIfStale(item.EastingKM, item.NorthingKM, item.UpdatedAt)
+		}
+		coords = append(coords, [2]int{item.EastingKM, item.NorthingKM})
+	}
+	return coords, nil
+}
 
 // TileResult holds the result of fetching a single tile.
 type TileResult struct {
