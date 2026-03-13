@@ -2,10 +2,19 @@
 package ogcapi
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
+	gocitygml "github.com/cwbudde/go-citygml/citygml"
+	cgjson "github.com/cwbudde/go-citygml/geojson"
+	"github.com/meko-tech/lgln-citygml-proxy/internal/bbox"
 	"github.com/meko-tech/lgln-citygml-proxy/internal/proxy"
+	"github.com/meko-tech/lgln-citygml-proxy/internal/utm"
 )
 
 // Link represents an OGC API hypermedia link.
@@ -110,8 +119,100 @@ func (h *handler) handleCollection(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, buildingsCollection)
 }
 
-func (h *handler) handleItems(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+func (h *handler) handleItems(w http.ResponseWriter, r *http.Request) {
+	bboxStr := r.URL.Query().Get("bbox")
+	if bboxStr == "" {
+		http.Error(w, "bbox parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	bb, err := bbox.Parse(bboxStr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("invalid bbox: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	coords := bb.TileCoords()
+	if len(coords) > 100 {
+		http.Error(w, fmt.Sprintf("bbox too large: %d tiles (max 100)", len(coords)), http.StatusBadRequest)
+		return
+	}
+
+	results := h.fetcher.GetMulti(coords, 4)
+
+	var features []any
+	for _, res := range results {
+		if res.Err != nil {
+			if !errors.Is(res.Err, proxy.ErrNotFound) {
+				log.Printf("tile [%d,%d]: %v", res.Coord[0], res.Coord[1], res.Err)
+			}
+			continue
+		}
+
+		doc, err := gocitygml.Read(bytes.NewReader(res.Data), gocitygml.Options{})
+		if err != nil {
+			log.Printf("parse tile [%d,%d]: %v", res.Coord[0], res.Coord[1], err)
+			continue
+		}
+
+		for i := range doc.Buildings {
+			transformed := utm.TransformBuilding(doc.Buildings[i])
+			feat := cgjson.BuildingFeature(&transformed)
+			features = append(features, feat)
+		}
+	}
+
+	// Pagination
+	limit := parseIntParam(r.URL.Query().Get("limit"), 100)
+	if limit <= 0 {
+		limit = 100
+	}
+	if limit > 1000 {
+		limit = 1000
+	}
+	offset := parseIntParam(r.URL.Query().Get("offset"), 0)
+	if offset < 0 {
+		offset = 0
+	}
+
+	total := len(features)
+	var page []any
+	if offset >= total {
+		page = []any{}
+	} else {
+		end := offset + limit
+		if end > total {
+			end = total
+		}
+		page = features[offset:end]
+	}
+
+	fc := FeatureCollection{
+		Type:           "FeatureCollection",
+		Features:       page,
+		NumberMatched:  total,
+		NumberReturned: len(page),
+		Links: []Link{
+			{Href: r.URL.RequestURI(), Rel: "self", Type: "application/geo+json", Title: "This document"},
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/geo+json")
+	if err := json.NewEncoder(w).Encode(fc); err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}
+}
+
+// parseIntParam parses an integer query parameter. Returns def if s is empty or invalid.
+func parseIntParam(s string, def int) int {
+	if s == "" {
+		return def
+	}
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		return def
+	}
+	return v
 }
 
 // writeJSON serialises v as JSON and writes it to w with Content-Type application/json.
