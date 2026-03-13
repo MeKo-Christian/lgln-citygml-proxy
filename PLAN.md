@@ -6,7 +6,7 @@ A proxy server that provides API access to LGLN Niedersachsen's CityGML LoD2 3D 
 
 LGLN publishes LoD2 CityGML tiles on IBM Cloud Object Storage:
 
-```
+```plain
 https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud/LoD2_32_{easting_km}_{northing_km}_1_ni.gml
 ```
 
@@ -35,7 +35,7 @@ Fetch multiple tiles covering a geographic bounding box.
 - Response: multipart or ZIP archive containing all matching tiles
 - Parallel tile fetching with concurrency limit
 
-## Phase 3 — OGC API Features
+## Phase 3 — OGC API Features ✅
 
 Standards-compliant OGC API Features endpoint (like NRW's ogc-api.nrw.de).
 
