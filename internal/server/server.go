@@ -92,7 +92,12 @@ func handleBBox(fetcher *proxy.Fetcher) http.HandlerFunc {
 			return
 		}
 
-		coords := bb.TileCoords()
+		coords, err := fetcher.BBoxTileCoords(r.Context(), bb)
+		if err != nil {
+			log.Printf("stac bbox query: %v", err)
+			http.Error(w, "tile discovery failed", http.StatusBadGateway)
+			return
+		}
 
 		const maxTiles = 100
 		if len(coords) > maxTiles {

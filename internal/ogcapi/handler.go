@@ -135,7 +135,12 @@ func (h *handler) handleItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	coords := bb.TileCoords()
+	coords, err := h.fetcher.BBoxTileCoords(r.Context(), bb)
+	if err != nil {
+		log.Printf("stac items query: %v", err)
+		http.Error(w, "tile discovery failed", http.StatusBadGateway)
+		return
+	}
 	if len(coords) > maxTilesItems {
 		http.Error(w, fmt.Sprintf("bbox too large: %d tiles (max %d)", len(coords), maxTilesItems), http.StatusBadRequest)
 		return
