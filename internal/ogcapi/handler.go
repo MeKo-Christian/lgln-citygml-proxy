@@ -165,7 +165,8 @@ func (h *handler) handleItems(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Pagination
+	// Pagination is applied after fetching all tiles: the bbox is the primary filter,
+	// so all matching tiles must be fetched regardless of limit.
 	limit := parseIntParam(r.URL.Query().Get("limit"), 100)
 	if limit <= 0 {
 		limit = 100
@@ -200,9 +201,11 @@ func (h *handler) handleItems(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
+	// Content-Type is application/geo+json, not application/json, so writeJSON cannot be used here.
 	w.Header().Set("Content-Type", "application/geo+json")
 	if err := json.NewEncoder(w).Encode(fc); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		// Response headers are already sent; only logging is possible at this point.
+		log.Printf("ogcapi: encode items response: %v", err)
 	}
 }
 
@@ -222,6 +225,7 @@ func parseIntParam(s string, def int) int {
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(v); err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		// Response headers are already sent; only logging is possible at this point.
+		log.Printf("ogcapi: encode JSON response: %v", err)
 	}
 }
