@@ -22,6 +22,9 @@ func New(fetcher *proxy.Fetcher) http.Handler {
 	mux.HandleFunc("GET /lod2/{easting}/{northing}", handleTile(fetcher))
 	mux.HandleFunc("GET /health", handleHealth)
 
+	// OGC API Features — each route is registered individually because the inner
+	// ogcapi mux uses absolute path patterns; changing the mount prefix here
+	// requires updating the inner mux patterns as well.
 	ogc := ogcapi.New(fetcher)
 	mux.Handle("GET /conformance", ogc)
 	mux.Handle("GET /collections", ogc)
