@@ -17,37 +17,72 @@ import (
 )
 
 const baseURL = "https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud"
+const lod1BaseURL = "https://lod1.s3.eu-de.cloud-object-storage.appdomain.cloud"
 
 // Fetcher retrieves CityGML tiles, caching them on disk.
 type Fetcher struct {
-	cacheDir string
-	base     string
-	client   *http.Client
-	stac     *stac.Client // nil = no STAC integration
+	cacheDir     string
+	base         string
+	tileTemplate string // printf pattern: "LoD2_32_%d_%d_1_ni.gml" or "LoD1_32_%d_%d_1_ni.gml"
+	label        string // "lod2" or "lod1"
+	client       *http.Client
+	stac         *stac.Client // nil = no STAC integration
 }
 
 // New creates a Fetcher with the given cache directory.
 func New(cacheDir string) *Fetcher {
 	return &Fetcher{
-		cacheDir: cacheDir,
-		base:     baseURL,
-		client:   &http.Client{},
+		cacheDir:     cacheDir,
+		base:         baseURL,
+		tileTemplate: "LoD2_32_%d_%d_1_ni.gml",
+		label:        "lod2",
+		client:       &http.Client{},
 	}
 }
 
 // NewWithBaseURL creates a Fetcher with an overridden base URL (for testing).
 func NewWithBaseURL(cacheDir, base string) *Fetcher {
-	return &Fetcher{cacheDir: cacheDir, base: base, client: &http.Client{}}
+	return &Fetcher{
+		cacheDir:     cacheDir,
+		base:         base,
+		tileTemplate: "LoD2_32_%d_%d_1_ni.gml",
+		label:        "lod2",
+		client:       &http.Client{},
+	}
 }
 
 // NewWithSTAC creates a Fetcher with the default upstream URL and a STAC client
 // pointing at stacBaseURL for cache freshness checks.
 func NewWithSTAC(cacheDir, stacBaseURL string) *Fetcher {
 	return &Fetcher{
-		cacheDir: cacheDir,
-		base:     baseURL,
-		client:   &http.Client{},
-		stac:     stac.New(stacBaseURL),
+		cacheDir:     cacheDir,
+		base:         baseURL,
+		tileTemplate: "LoD2_32_%d_%d_1_ni.gml",
+		label:        "lod2",
+		client:       &http.Client{},
+		stac:         stac.New(stacBaseURL),
+	}
+}
+
+// NewLoD1 creates a Fetcher for LoD1 tiles from the LGLN S3 bucket.
+func NewLoD1(cacheDir string) *Fetcher {
+	return &Fetcher{
+		cacheDir:     cacheDir,
+		base:         lod1BaseURL,
+		tileTemplate: "LoD1_32_%d_%d_1_ni.gml",
+		label:        "lod1",
+		client:       &http.Client{},
+	}
+}
+
+// NewLoD1WithBaseURL creates a LoD1 Fetcher with an overridden base URL (for testing).
+func NewLoD1WithBaseURL(cacheDir, base string) *Fetcher {
+	return &Fetcher{
+		cacheDir:     cacheDir,
+		base:         base,
+		tileTemplate: "LoD1_32_%d_%d_1_ni.gml",
+		label:        "lod1",
+		client:       &http.Client{},
 	}
 }
 
@@ -56,10 +91,19 @@ func TileURL(eastingKM, northingKM int) string {
 	return fmt.Sprintf("%s/LoD2_32_%d_%d_1_ni.gml", baseURL, eastingKM, northingKM)
 }
 
+// TileName returns the filename for the tile at the given km coordinates.
+func (f *Fetcher) TileName(eastingKM, northingKM int) string {
+	return fmt.Sprintf(f.tileTemplate, eastingKM, northingKM)
+}
+
+// Label returns "lod2" or "lod1", identifying which LoD level this Fetcher serves.
+func (f *Fetcher) Label() string {
+	return f.label
+}
+
 // tilePath returns the local cache path for a tile.
 func (f *Fetcher) tilePath(eastingKM, northingKM int) string {
-	name := fmt.Sprintf("LoD2_32_%d_%d_1_ni.gml", eastingKM, northingKM)
-	return filepath.Join(f.cacheDir, name)
+	return filepath.Join(f.cacheDir, f.TileName(eastingKM, northingKM))
 }
 
 // Get returns the CityGML data for the tile at the given km coordinates.
@@ -73,7 +117,7 @@ func (f *Fetcher) Get(eastingKM, northingKM int) ([]byte, error) {
 	}
 
 	// Fetch from upstream.
-	url := fmt.Sprintf("%s/LoD2_32_%d_%d_1_ni.gml", f.base, eastingKM, northingKM)
+	url := fmt.Sprintf("%s/%s", f.base, f.TileName(eastingKM, northingKM))
 
 	resp, err := f.client.Get(url)
 	if err != nil {
