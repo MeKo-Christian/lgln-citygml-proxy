@@ -9,10 +9,10 @@ import (
 
 // WGS84 ellipsoid constants.
 const (
-	a  = 6378137.0
-	f  = 1.0 / 298.257223563
-	e2 = 2*f - f*f       // first eccentricity squared
-	ep2 = e2 / (1 - e2)  // second eccentricity squared
+	a   = 6378137.0
+	f   = 1.0 / 298.257223563
+	e2  = 2*f - f*f     // first eccentricity squared
+	ep2 = e2 / (1 - e2) // second eccentricity squared
 )
 
 // UTM Zone 32N parameters.
