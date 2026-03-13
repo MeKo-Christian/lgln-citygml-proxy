@@ -15,8 +15,10 @@ LGLN publishes CityGML LoD2 tiles (1 km × 1 km grid, EPSG:25832) as individual 
 
 | Endpoint | Description |
 |---|---|
-| `GET /lod2/{easting}/{northing}` | Single tile as `application/gml+xml` |
-| `GET /lod2?bbox=west,south,east,north` | All tiles in bbox as a ZIP archive (max 100 tiles, EPSG:25832) |
+| `GET /lod2/{easting}/{northing}` | Single LoD2 tile as `application/gml+xml` |
+| `GET /lod2?bbox=west,south,east,north` | LoD2 tiles in bbox as a ZIP archive (max 100 tiles, EPSG:25832) |
+| `GET /lod1/{easting}/{northing}` | Single LoD1 tile as `application/gml+xml` |
+| `GET /lod1?bbox=west,south,east,north` | LoD1 tiles in bbox as a ZIP archive (max 100 tiles, EPSG:25832) |
 | `GET /collections/buildings/items?bbox=...` | Buildings as GeoJSON (OGC API Features) |
 | `GET /collections` | OGC API collection listing |
 | `GET /conformance` | OGC API conformance classes |
