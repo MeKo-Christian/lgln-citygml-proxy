@@ -57,6 +57,22 @@ type FeatureCollection struct {
 	Links          []Link `json:"links"`
 }
 
+var buildingsCollection = Collection{
+	ID:          "buildings",
+	Title:       "LoD2 Buildings (LGLN Niedersachsen)",
+	Description: "3D building models for Lower Saxony from LGLN, license CC BY 4.0.",
+	Links: []Link{
+		{Href: "/collections/buildings/items", Rel: "items", Type: "application/geo+json", Title: "Buildings"},
+	},
+	Extent: &Extent{
+		Spatial: SpatialExtent{
+			BBox: [][]float64{{5.9, 51.3, 11.6, 53.9}},
+			CRS:  "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+		},
+	},
+	CRS: []string{"http://www.opengis.net/def/crs/OGC/1.3/CRS84"},
+}
+
 type handler struct {
 	fetcher *proxy.Fetcher
 }
@@ -82,11 +98,14 @@ func (h *handler) handleConformance(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (h *handler) handleCollections(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	writeJSON(w, Collections{
+		Collections: []Collection{buildingsCollection},
+		Links:       []Link{{Href: "/collections", Rel: "self", Type: "application/json"}},
+	})
 }
 
 func (h *handler) handleCollection(w http.ResponseWriter, _ *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	writeJSON(w, buildingsCollection)
 }
 
 func (h *handler) handleItems(w http.ResponseWriter, _ *http.Request) {

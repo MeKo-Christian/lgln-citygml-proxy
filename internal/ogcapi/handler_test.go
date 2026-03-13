@@ -35,3 +35,48 @@ func TestConformance(t *testing.T) {
 		t.Fatal("expected at least one conformance class URI, got none")
 	}
 }
+
+func TestCollections(t *testing.T) {
+	h := newHandler(t)
+	req := httptest.NewRequest(http.MethodGet, "/collections", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	var body ogcapi.Collections
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(body.Collections) == 0 {
+		t.Fatal("no collections returned")
+	}
+	found := false
+	for _, c := range body.Collections {
+		if c.ID == "buildings" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("collection 'buildings' not found")
+	}
+}
+
+func TestCollection_Buildings(t *testing.T) {
+	h := newHandler(t)
+	req := httptest.NewRequest(http.MethodGet, "/collections/buildings", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	var body ogcapi.Collection
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body.ID != "buildings" {
+		t.Errorf("id = %q, want 'buildings'", body.ID)
+	}
+}
