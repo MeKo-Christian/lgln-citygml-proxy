@@ -53,7 +53,7 @@ Use the LGLN STAC API for tile discovery instead of hardcoded URL patterns.
 - Use STAC item metadata for freshness checks (Aktualitaet field)
 - Cache invalidation based on STAC timestamps
 
-## Phase 5 — LoD1 Support
+## Phase 5 — LoD1 Support ✅
 
 Add LoD1 tiles alongside LoD2.
 
