@@ -33,15 +33,17 @@ go test -v ./internal/proxy/...
 The project has two independent Go programs and a browser demo:
 
 ### 1. Proxy server (`main.go` + `cmd/serve.go`)
-An HTTP proxy that caches LGLN Niedersachsen CityGML LoD2 tiles on disk and re-serves them. Tiles are 1 km grid squares identified by EPSG:25832 easting/northing coordinates in km.
+An HTTP proxy that caches LGLN Niedersachsen CityGML LoD1 and LoD2 tiles on disk and re-serves them. Tiles are 1 km grid squares identified by EPSG:25832 easting/northing coordinates in km.
 
 **Request flow:**
 - `GET /lod2/{easting}/{northing}` → `internal/server` → `internal/proxy.Fetcher.Get()` → serves `.gml` file
 - `GET /lod2?bbox=west,south,east,north` → `internal/server` → `internal/proxy.Fetcher.BBoxTileCoords()` → concurrent `GetMulti()` → ZIP archive
-- OGC API Features routes (`/conformance`, `/collections`, `/collections/buildings/items`) → `internal/ogcapi` → same Fetcher
+- `GET /lod1/{easting}/{northing}` → same as `/lod2` but via the LoD1 Fetcher (different S3 bucket and filename prefix)
+- `GET /lod1?bbox=west,south,east,north` → same as `/lod2?bbox` but via the LoD1 Fetcher
+- OGC API Features routes (`/conformance`, `/collections`, `/collections/buildings/items`) → `internal/ogcapi` → LoD2 Fetcher
 
 **Key packages:**
-- `internal/proxy` — `Fetcher` caches tiles to disk; fetches from `lod2.s3.eu-de.cloud-object-storage.appdomain.cloud`; optional STAC integration for cache invalidation
+- `internal/proxy` — `Fetcher` caches tiles to disk; `New` targets `lod2.s3.eu-de.cloud-object-storage.appdomain.cloud`, `NewLoD1` targets `lod1.s3.eu-de.cloud-object-storage.appdomain.cloud`; optional STAC integration for cache invalidation
 - `internal/server` — registers HTTP routes, calls the Fetcher
 - `internal/ogcapi` — OGC API Features-compliant handler; parses CityGML and converts to GeoJSON features
 - `internal/stac` — STAC API client for tile discovery and freshness checks (queries `Aktualitaet` property)
@@ -62,7 +64,7 @@ Static HTML/JS app that loads the WASM, fetches Hannover tile GML files from `we
 
 ## Tile naming convention
 
-Tiles follow the pattern `LoD2_32_{easting}_{northing}_1_ni.gml` where easting/northing are EPSG:25832 km grid coordinates (e.g., `LoD2_32_550_5800_1_ni.gml`).
+Tiles follow the pattern `{LoD}_32_{easting}_{northing}_1_ni.gml` where `{LoD}` is `LoD2` or `LoD1` and easting/northing are EPSG:25832 km grid coordinates (e.g., `LoD2_32_550_5800_1_ni.gml`, `LoD1_32_550_5800_1_ni.gml`).
 
 ## Deployment
 
