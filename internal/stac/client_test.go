@@ -20,6 +20,10 @@ func TestParseItemID(t *testing.T) {
 		{"LoD2_32_abc_5800_1_ni", 0, 0, false},
 		{"LoD2_32_550_abc_1_ni", 0, 0, false},
 		{"", 0, 0, false},
+		{"Foo_32_550_5800_1_ni", 0, 0, false},
+		{"LoD2_99_550_5800_1_ni", 0, 0, false},
+		{"LoD2_32_-550_5800_1_ni", 0, 0, false},
+		{"LoD2_32_550_-5800_1_ni", 0, 0, false},
 	}
 	for _, tt := range tests {
 		e, n, ok := stac.ParseItemID(tt.id)

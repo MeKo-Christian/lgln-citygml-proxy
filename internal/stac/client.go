@@ -20,7 +20,10 @@ type Item struct {
 func ParseItemID(id string) (eastingKM, northingKM int, ok bool) {
 	id = strings.TrimSuffix(id, ".gml")
 	parts := strings.Split(id, "_")
-	if len(parts) < 4 {
+	if len(parts) != 6 {
+		return 0, 0, false
+	}
+	if parts[0] != "LoD2" || parts[1] != "32" {
 		return 0, 0, false
 	}
 	e, err := strconv.Atoi(parts[2])
@@ -29,6 +32,9 @@ func ParseItemID(id string) (eastingKM, northingKM int, ok bool) {
 	}
 	n, err := strconv.Atoi(parts[3])
 	if err != nil {
+		return 0, 0, false
+	}
+	if e < 0 || n < 0 {
 		return 0, 0, false
 	}
 	return e, n, true
