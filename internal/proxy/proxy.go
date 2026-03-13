@@ -109,21 +109,22 @@ var ErrNotFound = fmt.Errorf("tile not found")
 // Returns nil if the file does not exist.
 func (f *Fetcher) Invalidate(eastingKM, northingKM int) error {
 	err := os.Remove(f.tilePath(eastingKM, northingKM))
-	if err != nil && os.IsNotExist(err) {
-		return nil
+	if err != nil && !os.IsNotExist(err) {
+		return err
 	}
-	return err
+	return nil
 }
 
 // invalidateIfStale removes the cached file for the given tile if it is older
 // than updatedAt. Errors are silently ignored (best-effort).
 func (f *Fetcher) invalidateIfStale(eastingKM, northingKM int, updatedAt time.Time) {
-	info, err := os.Stat(f.tilePath(eastingKM, northingKM))
+	path := f.tilePath(eastingKM, northingKM)
+	info, err := os.Stat(path)
 	if err != nil {
 		return
 	}
 	if info.ModTime().Before(updatedAt) {
-		_ = os.Remove(f.tilePath(eastingKM, northingKM))
+		_ = os.Remove(path)
 	}
 }
 
