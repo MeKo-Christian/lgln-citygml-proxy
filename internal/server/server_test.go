@@ -221,3 +221,23 @@ func TestHandleBBox_AllNotFound(t *testing.T) {
 		t.Errorf("status = %d, want 404", rec.Code)
 	}
 }
+
+func TestOGCAPI_Conformance_ReachableFromServer(t *testing.T) {
+	h := New(proxy.New(t.TempDir()))
+	req := httptest.NewRequest(http.MethodGet, "/conformance", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200", rec.Code)
+	}
+}
+
+func TestOGCAPI_Collections_ReachableFromServer(t *testing.T) {
+	h := New(proxy.New(t.TempDir()))
+	req := httptest.NewRequest(http.MethodGet, "/collections", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200", rec.Code)
+	}
+}

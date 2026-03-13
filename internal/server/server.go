@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/meko-tech/lgln-citygml-proxy/internal/bbox"
+	"github.com/meko-tech/lgln-citygml-proxy/internal/ogcapi"
 	"github.com/meko-tech/lgln-citygml-proxy/internal/proxy"
 )
 
@@ -20,6 +21,13 @@ func New(fetcher *proxy.Fetcher) http.Handler {
 	mux.HandleFunc("GET /lod2", handleBBox(fetcher))
 	mux.HandleFunc("GET /lod2/{easting}/{northing}", handleTile(fetcher))
 	mux.HandleFunc("GET /health", handleHealth)
+
+	ogc := ogcapi.New(fetcher)
+	mux.Handle("GET /conformance", ogc)
+	mux.Handle("GET /collections", ogc)
+	mux.Handle("GET /collections/buildings", ogc)
+	mux.Handle("GET /collections/buildings/items", ogc)
+
 	return mux
 }
 
