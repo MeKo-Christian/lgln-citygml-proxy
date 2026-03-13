@@ -1,10 +1,10 @@
 # lgln-citygml-proxy
 
-A caching HTTP proxy for the [LGLN Niedersachsen](https://www.lgln.niedersachsen.de/) CityGML LoD2 3D building dataset, with an OGC API Features endpoint and a browser-based viewer.
+A caching HTTP proxy for the [LGLN Niedersachsen](https://www.lgln.niedersachsen.de/) CityGML LoD1 and LoD2 3D building dataset, with an OGC API Features endpoint and a browser-based viewer.
 
 ## What it does
 
-LGLN publishes CityGML LoD2 tiles (1 km × 1 km grid, EPSG:25832) as individual `.gml` files on an S3-compatible store. This proxy:
+LGLN publishes CityGML LoD1 and LoD2 tiles (1 km × 1 km grid, EPSG:25832) as individual `.gml` files on an S3-compatible store. This proxy:
 
 - Fetches tiles on demand and caches them to disk
 - Exposes a simple tile API and a bounding-box bulk-download endpoint
@@ -19,12 +19,12 @@ LGLN publishes CityGML LoD2 tiles (1 km × 1 km grid, EPSG:25832) as individual 
 | `GET /lod2?bbox=west,south,east,north` | LoD2 tiles in bbox as a ZIP archive (max 100 tiles, EPSG:25832) |
 | `GET /lod1/{easting}/{northing}` | Single LoD1 tile as `application/gml+xml` |
 | `GET /lod1?bbox=west,south,east,north` | LoD1 tiles in bbox as a ZIP archive (max 100 tiles, EPSG:25832) |
-| `GET /collections/buildings/items?bbox=...` | Buildings as GeoJSON (OGC API Features) |
+| `GET /collections/buildings/items?bbox=...` | LoD2 buildings as GeoJSON (OGC API Features) |
 | `GET /collections` | OGC API collection listing |
 | `GET /conformance` | OGC API conformance classes |
 | `GET /health` | Health check |
 
-Tile coordinates are EPSG:25832 easting/northing in **kilometres** (e.g., `/lod2/550/5800` for Hannover city centre).
+Tile coordinates are EPSG:25832 easting/northing in **kilometres** (e.g., `/lod2/550/5800` or `/lod1/550/5800` for Hannover city centre).
 
 ## Running
 
