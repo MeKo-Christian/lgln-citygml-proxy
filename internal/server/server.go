@@ -16,16 +16,22 @@ import (
 )
 
 // New returns an http.Handler with all routes registered.
-func New(fetcher *proxy.Fetcher) http.Handler {
+// lod1 may be nil to disable the /lod1 endpoints.
+func New(lod2, lod1 *proxy.Fetcher) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /lod2", handleBBox(fetcher))
-	mux.HandleFunc("GET /lod2/{easting}/{northing}", handleTile(fetcher))
+	mux.HandleFunc("GET /lod2", handleBBox(lod2))
+	mux.HandleFunc("GET /lod2/{easting}/{northing}", handleTile(lod2))
 	mux.HandleFunc("GET /health", handleHealth)
+
+	if lod1 != nil {
+		mux.HandleFunc("GET /lod1", handleBBox(lod1))
+		mux.HandleFunc("GET /lod1/{easting}/{northing}", handleTile(lod1))
+	}
 
 	// OGC API Features — each route is registered individually because the inner
 	// ogcapi mux uses absolute path patterns; changing the mount prefix here
 	// requires updating the inner mux patterns as well.
-	ogc := ogcapi.New(fetcher)
+	ogc := ogcapi.New(lod2)
 	mux.Handle("GET /conformance", ogc)
 	mux.Handle("GET /collections", ogc)
 	mux.Handle("GET /collections/buildings", ogc)
@@ -73,7 +79,7 @@ func handleTile(fetcher *proxy.Fetcher) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/gml+xml")
 		w.Header().Set("Content-Disposition",
-			fmt.Sprintf("inline; filename=\"LoD2_32_%d_%d_1_ni.gml\"", easting, northing))
+			fmt.Sprintf("inline; filename=\"%s\"", fetcher.TileName(easting, northing)))
 		w.Write(data)
 	}
 }
@@ -119,7 +125,7 @@ func handleBBox(fetcher *proxy.Fetcher) http.HandlerFunc {
 				}
 				continue
 			}
-			name := fmt.Sprintf("LoD2_32_%d_%d_1_ni.gml", r.Coord[0], r.Coord[1])
+			name := fetcher.TileName(r.Coord[0], r.Coord[1])
 			entries = append(entries, entry{name, r.Data})
 		}
 
@@ -129,7 +135,8 @@ func handleBBox(fetcher *proxy.Fetcher) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/zip")
-		w.Header().Set("Content-Disposition", "attachment; filename=\"lod2_tiles.zip\"")
+		w.Header().Set("Content-Disposition",
+			fmt.Sprintf("attachment; filename=\"%s_tiles.zip\"", fetcher.Label()))
 
 		zw := zip.NewWriter(w)
 		for _, e := range entries {
