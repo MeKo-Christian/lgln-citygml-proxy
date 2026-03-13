@@ -1,4 +1,4 @@
-// Package proxy fetches and caches LGLN CityGML LoD2 tiles.
+// Package proxy fetches and caches LGLN CityGML tiles (LoD1 and LoD2).
 package proxy
 
 import (
@@ -84,11 +84,6 @@ func NewLoD1WithBaseURL(cacheDir, base string) *Fetcher {
 		label:        "lod1",
 		client:       &http.Client{},
 	}
-}
-
-// TileURL returns the upstream URL for the given tile coordinates.
-func TileURL(eastingKM, northingKM int) string {
-	return fmt.Sprintf("%s/LoD2_32_%d_%d_1_ni.gml", baseURL, eastingKM, northingKM)
 }
 
 // TileName returns the filename for the tile at the given km coordinates.

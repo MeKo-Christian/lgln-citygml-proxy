@@ -15,23 +15,6 @@ import (
 	"github.com/meko-tech/lgln-citygml-proxy/internal/bbox"
 )
 
-func TestTileURL(t *testing.T) {
-	tests := []struct {
-		easting  int
-		northing int
-		want     string
-	}{
-		{550, 5800, "https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud/LoD2_32_550_5800_1_ni.gml"},
-		{551, 5801, "https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud/LoD2_32_551_5801_1_ni.gml"},
-	}
-	for _, tt := range tests {
-		got := TileURL(tt.easting, tt.northing)
-		if got != tt.want {
-			t.Errorf("TileURL(%d, %d) = %q, want %q", tt.easting, tt.northing, got, tt.want)
-		}
-	}
-}
-
 func TestFetcher_GetFromCache(t *testing.T) {
 	dir := t.TempDir()
 	data := []byte("<CityModel/>")
