@@ -103,7 +103,7 @@ type stacProperties struct {
 // Unrecognised item IDs are silently skipped.
 func (c *Client) ItemsByBBox(ctx context.Context, westLon, southLat, eastLon, northLat float64) ([]Item, error) {
 	q := url.Values{
-		"bbox":  {fmt.Sprintf("%f,%f,%f,%f", westLon, southLat, eastLon, northLat)},
+		"bbox":  {fmt.Sprintf("%g,%g,%g,%g", westLon, southLat, eastLon, northLat)},
 		"limit": {"500"},
 	}
 	endpoint := fmt.Sprintf("%s/collections/lod2/items?%s", c.base, q.Encode())
@@ -112,6 +112,7 @@ func (c *Client) ItemsByBBox(ctx context.Context, westLon, southLat, eastLon, no
 	if err != nil {
 		return nil, fmt.Errorf("stac request: %w", err)
 	}
+	req.Header.Set("Accept", "application/geo+json")
 
 	resp, err := c.client.Do(req)
 	if err != nil {

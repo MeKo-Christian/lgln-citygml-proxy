@@ -93,6 +93,11 @@ func TestClient_ItemsByBBox(t *testing.T) {
 	if !items[0].UpdatedAt.Equal(wantTime) {
 		t.Errorf("item[0].UpdatedAt = %v, want %v", items[0].UpdatedAt, wantTime)
 	}
+	// No Aktualitaet on item[1] → falls back to datetime "2022-01-01T00:00:00Z"
+	wantTime2 := time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
+	if !items[1].UpdatedAt.Equal(wantTime2) {
+		t.Errorf("item[1].UpdatedAt = %v, want %v", items[1].UpdatedAt, wantTime2)
+	}
 }
 
 func TestClient_ItemsByBBox_HTTPError(t *testing.T) {
