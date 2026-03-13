@@ -238,6 +238,51 @@ func TestFetcher_BBoxTileCoords_WithSTAC_InvalidatesStale(t *testing.T) {
 	}
 }
 
+func TestTileName_LoD2(t *testing.T) {
+	f := New(t.TempDir())
+	if got := f.TileName(550, 5800); got != "LoD2_32_550_5800_1_ni.gml" {
+		t.Errorf("TileName = %q, want LoD2_32_550_5800_1_ni.gml", got)
+	}
+}
+
+func TestTileName_LoD1(t *testing.T) {
+	f := NewLoD1(t.TempDir())
+	if got := f.TileName(550, 5800); got != "LoD1_32_550_5800_1_ni.gml" {
+		t.Errorf("TileName = %q, want LoD1_32_550_5800_1_ni.gml", got)
+	}
+}
+
+func TestLabel_LoD2(t *testing.T) {
+	f := New(t.TempDir())
+	if got := f.Label(); got != "lod2" {
+		t.Errorf("Label = %q, want lod2", got)
+	}
+}
+
+func TestLabel_LoD1(t *testing.T) {
+	f := NewLoD1(t.TempDir())
+	if got := f.Label(); got != "lod1" {
+		t.Errorf("Label = %q, want lod1", got)
+	}
+}
+
+func TestFetcher_GetLoD1_UsesCorrectURL(t *testing.T) {
+	var gotPath string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		fmt.Fprint(w, "<CityModel/>")
+	}))
+	defer srv.Close()
+
+	f := NewLoD1WithBaseURL(t.TempDir(), srv.URL)
+	if _, err := f.Get(550, 5800); err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if want := "/LoD1_32_550_5800_1_ni.gml"; gotPath != want {
+		t.Errorf("fetched path = %q, want %q", gotPath, want)
+	}
+}
+
 func TestFetcher_BBoxTileCoords_WithSTAC_KeepsFreshCache(t *testing.T) {
 	dir := t.TempDir()
 
