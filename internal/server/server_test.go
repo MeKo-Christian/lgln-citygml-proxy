@@ -3,7 +3,6 @@ package server
 import (
 	"archive/zip"
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -132,6 +131,10 @@ func TestHandleBBox_OK(t *testing.T) {
 	}
 	if ct := rec.Header().Get("Content-Type"); ct != "application/zip" {
 		t.Errorf("Content-Type = %q, want application/zip", ct)
+	}
+	cd := rec.Header().Get("Content-Disposition")
+	if !strings.Contains(cd, "lod2_tiles.zip") {
+		t.Errorf("Content-Disposition = %q, want lod2_tiles.zip", cd)
 	}
 
 	zr, err := zip.NewReader(bytes.NewReader(rec.Body.Bytes()), int64(rec.Body.Len()))
@@ -305,5 +308,3 @@ func TestLoD1_NotRegisteredWhenNil(t *testing.T) {
 		t.Errorf("status = %d, want 404 or 405 (route not registered)", rec.Code)
 	}
 }
-
-var _ = fmt.Sprintf // ensure fmt is used
