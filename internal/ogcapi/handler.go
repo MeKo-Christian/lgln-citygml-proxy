@@ -57,6 +57,8 @@ type FeatureCollection struct {
 	Links          []Link `json:"links"`
 }
 
+// buildingsCollection is the static metadata for the buildings collection.
+// Do not mutate this variable; handlers must not modify its slice or pointer fields.
 var buildingsCollection = Collection{
 	ID:          "buildings",
 	Title:       "LoD2 Buildings (LGLN Niedersachsen)",
