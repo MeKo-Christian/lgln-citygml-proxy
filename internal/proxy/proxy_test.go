@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,9 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/meko-tech/lgln-citygml-proxy/internal/bbox"
 )
 
 func TestTileURL(t *testing.T) {
@@ -145,13 +149,125 @@ func TestFetcher_GetMulti_SkipsNotFound(t *testing.T) {
 	found := 0
 	notFound := 0
 	for _, r := range results {
-		if r.Err == nil {
+		switch r.Err {
+		case nil:
 			found++
-		} else if r.Err == ErrNotFound {
+		case ErrNotFound:
 			notFound++
 		}
 	}
 	if found != 1 || notFound != 1 {
 		t.Errorf("got found=%d notFound=%d, want found=1 notFound=1", found, notFound)
+	}
+}
+
+func TestFetcher_Invalidate(t *testing.T) {
+	dir := t.TempDir()
+	name := "LoD2_32_550_5800_1_ni.gml"
+	cachePath := filepath.Join(dir, name)
+	if err := os.WriteFile(cachePath, []byte("<CityModel/>"), 0o640); err != nil {
+		t.Fatal(err)
+	}
+
+	f := New(dir)
+	if err := f.Invalidate(550, 5800); err != nil {
+		t.Fatalf("Invalidate: %v", err)
+	}
+	if _, err := os.Stat(cachePath); !os.IsNotExist(err) {
+		t.Error("expected cache file to be removed after Invalidate")
+	}
+}
+
+func TestFetcher_Invalidate_NoFile(t *testing.T) {
+	f := New(t.TempDir())
+	if err := f.Invalidate(999, 999); err != nil {
+		t.Errorf("Invalidate on non-existent tile should not error, got: %v", err)
+	}
+}
+
+func TestFetcher_BBoxTileCoords_NoSTAC(t *testing.T) {
+	f := New(t.TempDir())
+	bb := bbox.BBox{West: 550000, South: 5800000, East: 550999, North: 5800999}
+	coords, err := f.BBoxTileCoords(context.Background(), bb)
+	if err != nil {
+		t.Fatalf("BBoxTileCoords: %v", err)
+	}
+	if len(coords) != 1 {
+		t.Fatalf("got %d coords, want 1", len(coords))
+	}
+	if coords[0] != [2]int{550, 5800} {
+		t.Errorf("got %v, want [550 5800]", coords[0])
+	}
+}
+
+func TestFetcher_BBoxTileCoords_WithSTAC_InvalidatesStale(t *testing.T) {
+	dir := t.TempDir()
+
+	// Plant a cache file with a very old mtime (2020).
+	name := "LoD2_32_550_5800_1_ni.gml"
+	cachePath := filepath.Join(dir, name)
+	if err := os.WriteFile(cachePath, []byte("<CityModel/>"), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	oldTime := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	_ = os.Chtimes(cachePath, oldTime, oldTime)
+
+	// Mock STAC server returning tile 550/5800 with a 2023 update timestamp.
+	stacSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		body := `{"type":"FeatureCollection","features":[` +
+			`{"id":"LoD2_32_550_5800_1_ni","type":"Feature","properties":{"datetime":"2023-01-01T00:00:00Z"}}` +
+			`]}`
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, body)
+	}))
+	defer stacSrv.Close()
+
+	f := NewWithSTAC(dir, stacSrv.URL)
+	bb := bbox.BBox{West: 550000, South: 5800000, East: 550999, North: 5800999}
+	coords, err := f.BBoxTileCoords(context.Background(), bb)
+	if err != nil {
+		t.Fatalf("BBoxTileCoords: %v", err)
+	}
+
+	// Stale cache should have been deleted.
+	if _, err := os.Stat(cachePath); !os.IsNotExist(err) {
+		t.Error("expected stale cache file to be removed")
+	}
+	if len(coords) != 1 || coords[0] != [2]int{550, 5800} {
+		t.Errorf("coords = %v, want [[550 5800]]", coords)
+	}
+}
+
+func TestFetcher_BBoxTileCoords_WithSTAC_KeepsFreshCache(t *testing.T) {
+	dir := t.TempDir()
+
+	// Plant a cache file with a future mtime (2030 — definitively fresh).
+	name := "LoD2_32_550_5800_1_ni.gml"
+	cachePath := filepath.Join(dir, name)
+	if err := os.WriteFile(cachePath, []byte("<CityModel/>"), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	futureTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+	_ = os.Chtimes(cachePath, futureTime, futureTime)
+
+	// STAC returns a 2023 update — older than the cache.
+	stacSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		body := `{"type":"FeatureCollection","features":[` +
+			`{"id":"LoD2_32_550_5800_1_ni","type":"Feature","properties":{"datetime":"2023-01-01T00:00:00Z"}}` +
+			`]}`
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, body)
+	}))
+	defer stacSrv.Close()
+
+	f := NewWithSTAC(dir, stacSrv.URL)
+	bb := bbox.BBox{West: 550000, South: 5800000, East: 550999, North: 5800999}
+	if _, err := f.BBoxTileCoords(context.Background(), bb); err != nil {
+		t.Fatalf("BBoxTileCoords: %v", err)
+	}
+
+	// Cache should still exist.
+	if _, err := os.Stat(cachePath); err != nil {
+		t.Errorf("expected fresh cache file to remain, got: %v", err)
 	}
 }
