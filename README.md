@@ -13,16 +13,16 @@ LGLN publishes CityGML LoD1 and LoD2 tiles (1 km × 1 km grid, EPSG:25832) as in
 
 ## API
 
-| Endpoint | Description |
-|---|---|
-| `GET /lod2/{easting}/{northing}` | Single LoD2 tile as `application/gml+xml` |
-| `GET /lod2?bbox=west,south,east,north` | LoD2 tiles in bbox as a ZIP archive (max 100 tiles, EPSG:25832) |
-| `GET /lod1/{easting}/{northing}` | Single LoD1 tile as `application/gml+xml` |
-| `GET /lod1?bbox=west,south,east,north` | LoD1 tiles in bbox as a ZIP archive (max 100 tiles, EPSG:25832) |
-| `GET /collections/buildings/items?bbox=...` | LoD2 buildings as GeoJSON (OGC API Features) |
-| `GET /collections` | OGC API collection listing |
-| `GET /conformance` | OGC API conformance classes |
-| `GET /health` | Health check |
+| Endpoint                                    | Description                                                     |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| `GET /lod2/{easting}/{northing}`            | Single LoD2 tile as `application/gml+xml`                       |
+| `GET /lod2?bbox=west,south,east,north`      | LoD2 tiles in bbox as a ZIP archive (max 100 tiles, EPSG:25832) |
+| `GET /lod1/{easting}/{northing}`            | Single LoD1 tile as `application/gml+xml`                       |
+| `GET /lod1?bbox=west,south,east,north`      | LoD1 tiles in bbox as a ZIP archive (max 100 tiles, EPSG:25832) |
+| `GET /collections/buildings/items?bbox=...` | LoD2 buildings as GeoJSON (OGC API Features)                    |
+| `GET /collections`                          | OGC API collection listing                                      |
+| `GET /conformance`                          | OGC API conformance classes                                     |
+| `GET /health`                               | Health check                                                    |
 
 Tile coordinates are EPSG:25832 easting/northing in **kilometres** (e.g., `/lod2/550/5800` or `/lod1/550/5800` for Hannover city centre).
 
@@ -52,11 +52,11 @@ lgln-citygml-proxy serve --port 8080 --cache-dir ./cache
 
 ### Flags
 
-| Flag | Default | Description |
-|---|---|---|
-| `--port` / `-p` | `8080` | Port to listen on |
-| `--cache-dir` / `-c` | `./cache` | Directory for cached tile files |
-| `--stac-url` | _(disabled)_ | STAC API base URL for tile discovery and cache freshness |
+| Flag                 | Default      | Description                                              |
+| -------------------- | ------------ | -------------------------------------------------------- |
+| `--port` / `-p`      | `8080`       | Port to listen on                                        |
+| `--cache-dir` / `-c` | `./cache`    | Directory for cached tile files                          |
+| `--stac-url`         | _(disabled)_ | STAC API base URL for tile discovery and cache freshness |
 
 ## Kubernetes / Helm
 

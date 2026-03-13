@@ -16,8 +16,10 @@ import (
 	"github.com/meko-tech/lgln-citygml-proxy/internal/utm"
 )
 
-const baseURL = "https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud"
-const lod1BaseURL = "https://lod1.s3.eu-de.cloud-object-storage.appdomain.cloud"
+const (
+	baseURL     = "https://lod2.s3.eu-de.cloud-object-storage.appdomain.cloud"
+	lod1BaseURL = "https://lod1.s3.eu-de.cloud-object-storage.appdomain.cloud"
+)
 
 // Fetcher retrieves CityGML tiles, caching them on disk.
 type Fetcher struct {

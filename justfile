@@ -7,11 +7,60 @@ set shell := ["bash", "-uc"]
 default:
     @just --list
 
-# Note: Install dependencies manually
-# treefmt: Download from https://github.com/numtide/treefmt/releases
-# Go tools: go install mvdan.cc/gofumpt@latest && go install github.com/daixiang0/gci@latest
-# golangci-lint: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-# prettier: npm install -g prettier
+# Install all missing development tools (formatters and linters)
+setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    go_tool() {
+        local bin=$1 pkg=$2
+        if command -v "$bin" >/dev/null 2>&1; then
+            echo "  $bin: already installed"
+        else
+            echo "  $bin: installing…"
+            go install "$pkg"
+        fi
+    }
+
+    echo "Go tools…"
+    go_tool gofumpt       mvdan.cc/gofumpt@latest
+    go_tool gci           github.com/daixiang0/gci@latest
+    go_tool shfmt         mvdan.cc/sh/v3/cmd/shfmt@latest
+    go_tool golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+    echo "prettier…"
+    if command -v prettier >/dev/null 2>&1; then
+        echo "  prettier: already installed"
+    else
+        echo "  prettier: installing via npm…"
+        npm install -g prettier
+    fi
+
+    echo "treefmt…"
+    if command -v treefmt >/dev/null 2>&1; then
+        echo "  treefmt: already installed"
+    else
+        echo "  treefmt: downloading latest release…"
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m)
+        INSTALL_DIR="${HOME}/.local/bin"
+        mkdir -p "$INSTALL_DIR"
+        ASSET_URL=$(curl -fsSL https://api.github.com/repos/numtide/treefmt/releases/latest \
+            | grep -o '"browser_download_url": *"[^"]*"' \
+            | grep -i "$OS" | grep -i "$ARCH" | grep '\.tar\.gz"' \
+            | head -1 \
+            | sed 's/"browser_download_url": *"\(.*\)"/\1/')
+        if [ -z "$ASSET_URL" ]; then
+            echo "  Could not find a treefmt release for ${OS}/${ARCH}."
+            echo "  Install manually from https://github.com/numtide/treefmt/releases"
+            exit 1
+        fi
+        curl -fsSL "$ASSET_URL" | tar -xz -C "$INSTALL_DIR" treefmt
+        echo "  treefmt installed to ${INSTALL_DIR}/treefmt"
+        echo "  Ensure ${INSTALL_DIR} is in your PATH."
+    fi
+
+    echo "All tools ready."
 
 # Format all code using treefmt
 fmt:

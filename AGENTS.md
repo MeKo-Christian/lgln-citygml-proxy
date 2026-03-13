@@ -19,11 +19,13 @@ just docker-build   # Build Docker image
 ```
 
 To run a single test package:
+
 ```sh
 go test -v ./internal/proxy/...
 ```
 
 ### Tool dependencies (install manually)
+
 - `treefmt`, `gofumpt`, `gci`, `shfmt`: for formatting
 - `golangci-lint`: for linting
 - `prettier`: for YAML/JSON/Markdown formatting
@@ -33,9 +35,11 @@ go test -v ./internal/proxy/...
 The project has two independent Go programs and a browser demo:
 
 ### 1. Proxy server (`main.go` + `cmd/serve.go`)
+
 An HTTP proxy that caches LGLN Niedersachsen CityGML LoD1 and LoD2 tiles on disk and re-serves them. Tiles are 1 km grid squares identified by EPSG:25832 easting/northing coordinates in km.
 
 **Request flow:**
+
 - `GET /lod2/{easting}/{northing}` → `internal/server` → `internal/proxy.Fetcher.Get()` → serves `.gml` file
 - `GET /lod2?bbox=west,south,east,north` → `internal/server` → `internal/proxy.Fetcher.BBoxTileCoords()` → concurrent `GetMulti()` → ZIP archive
 - `GET /lod1/{easting}/{northing}` → same as `/lod2` but via the LoD1 Fetcher (different S3 bucket and filename prefix)
@@ -43,6 +47,7 @@ An HTTP proxy that caches LGLN Niedersachsen CityGML LoD1 and LoD2 tiles on disk
 - OGC API Features routes (`/conformance`, `/collections`, `/collections/buildings/items`) → `internal/ogcapi` → LoD2 Fetcher
 
 **Key packages:**
+
 - `internal/proxy` — `Fetcher` caches tiles to disk; `New` targets `lod2.s3.eu-de.cloud-object-storage.appdomain.cloud`, `NewLoD1` targets `lod1.s3.eu-de.cloud-object-storage.appdomain.cloud`; optional STAC integration for cache invalidation
 - `internal/server` — registers HTTP routes, calls the Fetcher
 - `internal/ogcapi` — OGC API Features-compliant handler; parses CityGML and converts to GeoJSON features
@@ -53,9 +58,11 @@ An HTTP proxy that caches LGLN Niedersachsen CityGML LoD1 and LoD2 tiles on disk
 **STAC integration** is opt-in via `--stac-url`. Without it, `BBoxTileCoords` derives tile coordinates purely from the bbox grid arithmetic.
 
 ### 2. WebAssembly module (`cmd/wasm/main.go`)
+
 Compiled to `web/citygml.wasm` for the browser demo. Exposes a single global JS function `parseCityGML(Uint8Array)` that returns a JSON object containing GeoJSON, a 3D scene graph, metadata, and validation findings. Uses `github.com/cwbudde/go-citygml` for parsing.
 
 ### 3. Web demo (`web/`)
+
 Static HTML/JS app that loads the WASM, fetches Hannover tile GML files from `web/tiles/`, parses them client-side, and renders them in a Leaflet map (`modules/map.js`) and a Three.js 3D scene (`modules/scene.js`). Run `just fetch-tiles` then `just build-wasm` before serving.
 
 ## Key external dependency
