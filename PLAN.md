@@ -45,7 +45,7 @@ Standards-compliant OGC API Features endpoint (like NRW's ogc-api.nrw.de).
 - Pagination support
 - Conformance classes: Core, GeoJSON, OGC API Features Part 1
 
-## Phase 4 — STAC Integration
+## Phase 4 — STAC Integration ✅
 
 Use the LGLN STAC API for tile discovery instead of hardcoded URL patterns.
 
