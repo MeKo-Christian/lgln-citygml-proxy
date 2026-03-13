@@ -36,7 +36,8 @@ var serveCmd = &cobra.Command{
 			fetcher = proxy.New(cacheDir)
 		}
 
-		mux := server.New(fetcher)
+		lod1Fetcher := proxy.NewLoD1(cacheDir)
+		mux := server.New(fetcher, lod1Fetcher)
 
 		addr := fmt.Sprintf(":%d", port)
 		log.Printf("listening on %s (cache: %s)", addr, cacheDir)
