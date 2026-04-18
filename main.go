@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/meko-tech/lgln-citygml-proxy/cmd"
+	"github.com/cwbudde/lgln-citygml-proxy/cmd"
 )
 
 func main() {

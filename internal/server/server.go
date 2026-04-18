@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/meko-tech/lgln-citygml-proxy/internal/bbox"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/ogcapi"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/proxy"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/bbox"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/ogcapi"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/proxy"
 )
 
 // New returns an http.Handler with all routes registered.

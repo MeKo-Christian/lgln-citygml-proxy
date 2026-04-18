@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/meko-tech/lgln-citygml-proxy/internal/proxy"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/server"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/proxy"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/server"
 	"github.com/spf13/cobra"
 )
 

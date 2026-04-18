@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/meko-tech/lgln-citygml-proxy/internal/stac"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/stac"
 )
 
 func TestParseItemID(t *testing.T) {

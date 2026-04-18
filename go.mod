@@ -1,4 +1,4 @@
-module github.com/meko-tech/lgln-citygml-proxy
+module github.com/cwbudde/lgln-citygml-proxy
 
 go 1.25.0
 

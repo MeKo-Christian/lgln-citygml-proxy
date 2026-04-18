@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/meko-tech/lgln-citygml-proxy/internal/proxy"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/proxy"
 )
 
 // upstreamServer returns a test HTTP server that responds with status/body for any request.

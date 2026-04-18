@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/meko-tech/lgln-citygml-proxy/internal/ogcapi"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/proxy"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/ogcapi"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/proxy"
 )
 
 func newHandler(t *testing.T) http.Handler {

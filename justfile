@@ -142,3 +142,7 @@ docker-build TAG="lgln-citygml-proxy:latest":
 # Run in Docker (mounts ./cache, exposes port 8080)
 docker-run TAG="lgln-citygml-proxy:latest":
     docker run --rm -p 8080:8080 -v "$(pwd)/cache:/cache" {{ TAG }}
+
+fix:
+    just lint-fix
+    just fmt

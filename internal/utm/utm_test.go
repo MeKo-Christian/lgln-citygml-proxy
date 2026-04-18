@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/cwbudde/go-citygml/types"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/utm"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/utm"
 )
 
 // TestToWGS84_Hannover tests a point near Hannover, Germany.

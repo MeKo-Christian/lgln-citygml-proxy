@@ -12,9 +12,9 @@ import (
 
 	gocitygml "github.com/cwbudde/go-citygml/citygml"
 	cgjson "github.com/cwbudde/go-citygml/geojson"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/bbox"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/proxy"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/utm"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/bbox"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/proxy"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/utm"
 )
 
 // Link represents an OGC API hypermedia link.

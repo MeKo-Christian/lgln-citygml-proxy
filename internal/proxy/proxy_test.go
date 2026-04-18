@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/meko-tech/lgln-citygml-proxy/internal/bbox"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/bbox"
 )
 
 func TestFetcher_GetFromCache(t *testing.T) {

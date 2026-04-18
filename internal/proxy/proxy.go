@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/meko-tech/lgln-citygml-proxy/internal/bbox"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/stac"
-	"github.com/meko-tech/lgln-citygml-proxy/internal/utm"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/bbox"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/stac"
+	"github.com/cwbudde/lgln-citygml-proxy/internal/utm"
 )
 
 const (
